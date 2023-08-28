@@ -7,14 +7,13 @@
 #define PRE_DIR_PATH_SEP "/"
 #define PRE_DIR_NAME "pre"
 
-enum pre_exit_codes { PRE_EXIT_PATH_NOT_FOUND = 1, PRE_EXIT_MKDIR };
 
 struct pre_config {
   bool verbose;
   const char *reg_path;
 };
 
-const char *pre_join(const char *prefix, const char *path_sep, const char *suffix);
+char *pre_join(char *dst, const char *path_sep, const char *suffix);
 struct pre_config pre_cfg_defaults(void);
 void pre_cfg_free(struct pre_config *cfg);
 

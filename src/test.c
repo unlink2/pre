@@ -4,10 +4,11 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <stdlib.h>
+#include <string.h>
 #include "pre.h"
 
 void test_pre_join(void **state) {
-  const char *res = pre_join("prefix", "/", "suffix");
+  const char *res = pre_join(strdup("prefix"), "/", "suffix");
   assert_string_equal("prefix/suffix", res);
   free((void*)res);
 }

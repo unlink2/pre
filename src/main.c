@@ -60,7 +60,7 @@ void pre_args_parse(int argc, char **argv) {
     exitcode = 1;
     goto exit;
   }
-
+  return;
 exit:
   pre_args_free();
   exit(exitcode); // NOLINT
@@ -73,11 +73,11 @@ int main(int argc, char **argv) {
   
   // map args to cfg here 
   struct pre_config cfg = pre_cfg_defaults();
-
   cfg.verbose = verb->count > 0;
 
   int res = pre_main(&cfg);
 
+  pre_cfg_free(&cfg);
   pre_args_free();
   return res;
 }

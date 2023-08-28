@@ -5,20 +5,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-const char *pre_join(const char *prefix, const char *path_sep,
-                     const char *suffix) {
-  if (!prefix || !suffix || !path_sep) {
+char *pre_join(char *dst, const char *path_sep, const char *suffix) {
+  if (!dst || !suffix || !path_sep) {
     return NULL;
   }
 
-  size_t len = strlen(prefix) + strlen(suffix) + strlen(path_sep) + 1;
-  char *dst = malloc(len);
-  memset(dst, 0, len);
-
-  strcat(dst, prefix);
-  strcat(dst, path_sep);
-  strcat(dst, suffix);
-  return dst;
+  size_t len = strlen(dst) + strlen(suffix) + strlen(path_sep) + 1;
+  char *new_dst = realloc(dst, len);
+  strcat(new_dst, path_sep);
+  strcat(new_dst, suffix);
+  return new_dst;
 }
 
 const char *pre_reg_path(void) {
@@ -29,11 +25,17 @@ const char *pre_reg_path(void) {
 
   path = getenv("XDG_DATA_HOME");
   if (path) {
-    return pre_join(path, PRE_DIR_PATH_SEP, PRE_DIR_NAME);
+    return pre_join(strdup(path), PRE_DIR_PATH_SEP, PRE_DIR_NAME);
+  }
+
+  const char *home = getenv("HOME");
+  if (home) {
+    return pre_join(pre_join(strdup(home), PRE_DIR_PATH_SEP, ".local"),
+                    PRE_DIR_PATH_SEP, "share");
   }
 
   // TODO: corss-platform default fallback
-  return pre_join(getenv("TMPDIR"), PRE_DIR_PATH_SEP, PRE_DIR_NAME);
+  return pre_join(strdup(getenv("TMPDIR")), PRE_DIR_PATH_SEP, PRE_DIR_NAME);
 }
 
 struct pre_config pre_cfg_defaults(void) {
@@ -43,8 +45,9 @@ struct pre_config pre_cfg_defaults(void) {
   const char *path = pre_reg_path();
   if (!path) {
     fprintf(stderr, "Unable to find valid path for registers!\n");
-    exit(PRE_EXIT_PATH_NOT_FOUND);
+    exit(EXIT_FAILURE);
   }
+  cfg.reg_path = path;
 
   return cfg;
 }
@@ -53,13 +56,25 @@ void pre_cfg_free(struct pre_config *cfg) { free((void *)cfg->reg_path); }
 
 int pre_mkdir(const char *path) {
   struct stat path_stat;
-  if (stat(path, &path_stat) != 0) {
-    return 0;
+
+  if (stat(path, &path_stat) == -1) {
+    perror("stat");
+    return -1;
   }
 
   if (!S_ISDIR(path_stat.st_mode)) {
+    fprintf(stderr, "'%s' exists, but is not a directory!\n", path);
+    return -1;
   }
 
+  if (mkdir(path, 0777) == -1) {
+    perror("mkdir");
+    return -1;
+  }
+
+  return 0;
 }
 
-int pre_main(struct pre_config *cfg) { return 0; }
+int pre_main(struct pre_config *cfg) {
+  return 0;
+}
