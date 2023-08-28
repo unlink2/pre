@@ -72,8 +72,7 @@ int main(int argc, char **argv) {
   pre_args_parse(argc, argv);
   
   // map args to cfg here 
-  struct pre_config cfg;
-  memset(&cfg, 0, sizeof(cfg));
+  struct pre_config cfg = pre_cfg_defaults();
 
   cfg.verbose = verb->count > 0;
 
