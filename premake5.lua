@@ -10,9 +10,9 @@ project ("lib"..NAME)
    links { }
    buildoptions { "-Wall", "-pedantic" }
 
-   files { "include/lib"..NAME.."/**.h", "src/lib"..NAME.."/**.c" }
+   files { "include/**.h", "src/**.c" }
    includedirs { "include" }
-   removefiles { "**/test/**" }
+   removefiles { "src/test*", "include/test*", "src/main.c" }
 
    filter "configurations:Debug"
       defines { "DEBUG" }
@@ -33,7 +33,7 @@ project (NAME)
 
    files { "include/**.h", "src/**.c" }
    includedirs { "include" }
-   removefiles { "**/test/**" }
+   removefiles { "src/test*", "include/test*" }
 
    filter "configurations:Debug"
       defines { "DEBUG" }
@@ -51,8 +51,9 @@ project ("test"..NAME)
    links { "cmocka" }
    buildoptions { "-Wall", "-pedantic" }
 
-   files { "include/lib"..NAME.."/**.h", "src/lib"..NAME.."/**.c" }
+   files { "include/**.h", "src/**.c" }
    includedirs { "include" }
+   removefiles { "src/main.c" }
 
    filter "configurations:Debug"
       defines { "DEBUG" }

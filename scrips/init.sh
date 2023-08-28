@@ -27,7 +27,6 @@ replace $PRE_CONST $CONST
 replace $PRE_STRUCT $STRUCT
 replace $PRE_FN $FN
 
-mv "src/lib$PRE_NAME" "src/lib$NAME"
-mv "include/lib$PRE_NAME" "include/lib$NAME"
-mv "include/lib$NAME/$PRE_NAME.h" "include/lib$NAME/$NAME.h"
+mv "include/$PRE_NAME.h" "include/$NAME.h"
+mv "src/$PRE_NAME.c" "src/$NAME.c"
 mv "doc/$PRE_NAME" "doc/$NAME" 

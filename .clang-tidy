@@ -20,10 +20,9 @@ Checks: "*,
   -readability-function-cognitive-complexity,
   -altera-id-dependent-backward-branch,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
-  -misc-no-recursion,
-  -concurrency-mt-unsafe,
-  -hicpp-signed-bitwise
+  -misc-no-recursion
 "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     None
+
