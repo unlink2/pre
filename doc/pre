@@ -4,21 +4,28 @@
 .TH man 8 "21 August 2023" "0.0.1" "pre manual"
 
 .SH NAME
-  pre
+  pre - piped registers
 .SH SYNOPSIS
   pre [-v] [--help] [--version]
 .SH DESCRIPTION
   pre
+  Usage: pre [-vrwa] [--help] [--version] [-o PATH] [-i PATH] [@[A-Za-z0-9]|PATH]
 
-  --help                    
-    display this help and exit
-  --version                 
-    display version info and exit
-  -v, --verbose             
-    verbose output
+  --help                    display this help and exit
+  --version                 display version info and exit
+  -v, --verbose             verbose output
+  -r, --read                Read from register
+  -w, --write               Read to register
+  -a, --append              Append to register
+  -o, --out=PATH            Output file
+  -i, --in=PATH             Input file
+  @[A-Za-z0-9]|PATH         Register
   
 .SH EXAMPLES
- 
+  echo "write" | pre @a 
+  pre -w @a 
+  pre -a @a
+
 .SH SEE ALSO
 
 .SH BUGS
