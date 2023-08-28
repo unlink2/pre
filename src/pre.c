@@ -88,7 +88,7 @@ FILE *pre_reg_fopen(const struct pre_config *cfg, const char *reg,
   if (len == 2 && reg[0] == PRE_REG_IDENT && isalnum(reg[1])) {
     char *path = pre_join(strdup(cfg->reg_path), PRE_DIR_PATH_SEP, reg);
     if (cfg->verbose) {
-      fprintf(stderr, "Register path: '%s'\n", path);
+      fprintf(stderr, "Register path: '%s',%s\n", path, mode);
     }
     FILE *f = fopen(path, mode);
     free(path);
@@ -97,9 +97,61 @@ FILE *pre_reg_fopen(const struct pre_config *cfg, const char *reg,
 
   const char *path = reg;
   if (cfg->verbose) {
-    fprintf(stderr, "File path: '%s'\n", path);
+    fprintf(stderr, "File path: '%s',%s\n", path, mode);
   }
   return fopen(path, mode);
+}
+
+const char *pre_sfmode(enum pre_fmode mode) {
+  switch (mode) {
+  case PRE_READ:
+    return "re";
+  case PRE_WRITE:
+    return "we";
+  case PRE_APPEND:
+    return "a";
+  }
+
+  return "re";
+}
+
+int pre_read(struct pre_config *cfg, FILE *f, FILE *out) {
+  char buf[PRE_BUF_LEN];
+  memset(buf, 0, PRE_BUF_LEN);
+
+  size_t read = 0;
+  while ((read = fread(buf, 1, PRE_BUF_LEN, f)) > 0) {
+    if (fwrite(buf, 1, read, out) == -1) {
+      perror("");
+      return EXIT_FAILURE;
+    }
+  }
+
+  if (read == -1) {
+    perror("");
+    return EXIT_FAILURE;
+  }
+
+  return 0;
+}
+
+int pre_write(struct pre_config *cfg, FILE *f, FILE *in, FILE *out) {
+  char buf[PRE_BUF_LEN];
+  memset(buf, 0, PRE_BUF_LEN);
+
+  size_t read = 0;
+  while ((read = fread(buf, 1, PRE_BUF_LEN, in)) > 0) {
+    if (!cfg->no_echo && fwrite(buf, 1, read, out) == -1) {
+      perror("");
+      return EXIT_FAILURE;
+    }
+    if (fwrite(buf, 1, read, f) == -1) {
+      perror("");
+      return EXIT_FAILURE;
+    }
+  }
+
+  return 0;
 }
 
 int pre_main(struct pre_config *cfg) {
@@ -110,12 +162,49 @@ int pre_main(struct pre_config *cfg) {
     return EXIT_FAILURE;
   }
 
-  FILE *f = pre_reg_fopen(cfg, cfg->reg, "we");
+  FILE *f = pre_reg_fopen(cfg, cfg->reg, pre_sfmode(cfg->mode));
   if (!f) {
     perror(cfg->reg);
     return EXIT_FAILURE;
   }
 
+  FILE *out = stdout;
+  if (cfg->out) {
+    if (cfg->verbose) {
+      fprintf(stderr, "Output file: '%s'\n", cfg->out);
+    }
+
+    out = fopen(cfg->out, "we");
+    if (!out) {
+      perror(cfg->out);
+      return EXIT_FAILURE;
+    }
+  }
+
+  FILE *in = stdin;
+  if (cfg->in) {
+    if (cfg->verbose) {
+      fprintf(stderr, "Input file: '%s'\n", cfg->in);
+    }
+
+    in = fopen(cfg->in, "re");
+    if (!in) {
+      perror(cfg->in);
+      return EXIT_FAILURE;
+    }
+  }
+
+  int exit_code = 0;
+  switch (cfg->mode) {
+  case PRE_READ:
+    exit_code = pre_read(cfg, f, out);
+    break;
+  case PRE_WRITE:
+  case PRE_APPEND:
+    exit_code = pre_write(cfg, f, in, out);
+    break;
+  }
+
   fclose(f);
-  return 0;
+  return exit_code;
 }

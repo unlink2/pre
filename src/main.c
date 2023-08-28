@@ -8,12 +8,20 @@ struct arg_lit *verb = NULL;
 struct arg_lit *help = NULL;
 struct arg_lit *version = NULL;
 
+struct arg_lit *read = NULL;
+struct arg_lit *write = NULL;
+struct arg_lit *append = NULL;
+
+struct arg_file *out = NULL;
+struct arg_file *in = NULL;
+
+struct arg_file *reg = NULL;
+
 // arg end stores errors
 struct arg_end *end = NULL;
 
-#define pre_argtable                                                          \
-  { help, version, verb, end, }
-
+#define pre_argtable                                                           \
+  { help, version, verb, read, write, append, out, in, reg, end, }
 
 void pre_args_free(void) {
   void *argtable[] = pre_argtable;
@@ -24,6 +32,16 @@ void pre_args_parse(int argc, char **argv) {
   help = arg_litn(NULL, "help", 0, 1, "display this help and exit");
   version = arg_litn(NULL, "version", 0, 1, "display version info and exit");
   verb = arg_litn("v", "verbose", 0, 1, "verbose output");
+
+  read = arg_lit0("r", "read", "Read from register");
+  write = arg_lit0("w", "write", "Read to register");
+  append = arg_lit0("a", "append", "Append to register");
+
+  out = arg_file0("o", "out", "PATH", "Output file");
+  in = arg_file0("i", "in", "PATH", "Input file");
+
+  reg = arg_file0(NULL, NULL, "@[A-Za-z0-9]|PATH", "Register");
+
   end = arg_end(20);
 
   void *argtable[] = pre_argtable;
@@ -66,13 +84,31 @@ exit:
   exit(exitcode); // NOLINT
 }
 
-
-
 int main(int argc, char **argv) {
   pre_args_parse(argc, argv);
-  
-  // map args to cfg here 
+
+  // map args to cfg here
   struct pre_config cfg = pre_cfg_defaults();
+
+  if (in->count) {
+    cfg.in = in->filename[0];
+  }
+  if (out->count) {
+    cfg.out = out->filename[0];
+  }
+  if (read->count) {
+    cfg.mode = PRE_READ;
+  }
+  if (write->count) {
+    cfg.mode = PRE_WRITE;
+  }
+  if (append->count) {
+    cfg.mode = PRE_APPEND;
+  }
+  if (reg->count) {
+    cfg.reg = reg->filename[0]; 
+  }
+
   cfg.verbose = verb->count > 0;
 
   int res = pre_main(&cfg);
