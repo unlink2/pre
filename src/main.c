@@ -17,11 +17,13 @@ struct arg_file *in = NULL;
 
 struct arg_file *reg = NULL;
 
+struct arg_file *reg_path = NULL;
+
 // arg end stores errors
 struct arg_end *end = NULL;
 
 #define pre_argtable                                                           \
-  { help, version, verb, read, write, append, out, in, reg, end, }
+  { help, version, verb, read, write, append, out, in, reg, reg_path, end, }
 
 void pre_args_free(void) {
   void *argtable[] = pre_argtable;
@@ -39,6 +41,7 @@ void pre_args_parse(int argc, char **argv) {
 
   out = arg_file0("o", "out", "PATH", "Output file");
   in = arg_file0("i", "in", "PATH", "Input file");
+  reg_path = arg_file0(NULL, "regpath", "PATH", "Register path");
 
   reg = arg_file0(NULL, NULL, "@[A-Za-z0-9]|PATH", "Register");
 
@@ -106,7 +109,12 @@ int main(int argc, char **argv) {
     cfg.mode = PRE_APPEND;
   }
   if (reg->count) {
-    cfg.reg = reg->filename[0]; 
+    cfg.reg = reg->filename[0];
+  }
+
+  if (reg_path->count) {
+    free((void *)cfg.reg_path);
+    cfg.reg_path = strdup(reg_path->filename[0]);
   }
 
   cfg.verbose = verb->count > 0;
