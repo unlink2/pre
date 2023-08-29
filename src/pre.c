@@ -1,5 +1,4 @@
 #include "pre.h"
-#include <asm-generic/errno-base.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
