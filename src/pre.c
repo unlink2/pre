@@ -1,4 +1,5 @@
 #include "pre.h"
+#include <asm-generic/errno-base.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,26 +21,35 @@ char *pre_join(char *dst, const char *path_sep, const char *suffix) {
   return new_dst;
 }
 
+bool pre_isdir(const char *path) {
+  struct stat pstat;
+  if (stat(path, &pstat) == -1) {
+    return false;
+  }
+
+  return S_ISDIR(pstat.st_mode);
+}
+
 const char *pre_reg_path(void) {
   const char *path = getenv(PRE_DIR_ENV);
-  if (path) {
+  if (path && pre_isdir(path)) {
     return strdup(path);
   }
 
   path = getenv("XDG_DATA_HOME");
-  if (path) {
+  if (path && pre_isdir(path)) {
     return pre_join(strdup(path), PRE_DIR_PATH_SEP, PRE_DIR_NAME);
   }
 
   const char *home = getenv("HOME");
-  if (home) {
+  if (home && pre_isdir(home)) {
     return pre_join(pre_join(pre_join(strdup(home), PRE_DIR_PATH_SEP, ".local"),
                              PRE_DIR_PATH_SEP, "share"),
                     PRE_DIR_PATH_SEP, PRE_DIR_NAME);
   }
 
   const char *posix_tmp = getenv("TMPDIR");
-  if (posix_tmp) {
+  if (posix_tmp && pre_isdir(posix_tmp)) {
     return pre_join(strdup(posix_tmp), PRE_DIR_PATH_SEP, PRE_DIR_NAME);
   }
   // TODO: corss-platform default fallback
@@ -64,17 +74,14 @@ struct pre_config pre_cfg_defaults(void) {
 void pre_cfg_free(struct pre_config *cfg) { free((void *)cfg->reg_path); }
 
 int pre_mkdir(const char *path) {
-  struct stat path_stat;
-
-  if (stat(path, &path_stat) == -1 && errno != ENOENT) {
+  if (mkdir(path, 0777) == -1 && errno != EEXIST) {
     fprintf(stderr, "%s: ", path);
-    perror("stat");
+    perror("mkdir");
     return -1;
   }
 
-  if (errno == ENOENT && mkdir(path, 0777) == -1) {
-    fprintf(stderr, "%s: ", path);
-    perror("mkdir");
+  if (!pre_isdir(path)) {
+    fprintf(stderr, "%s: is not a directory\n", path);
     return -1;
   }
 
